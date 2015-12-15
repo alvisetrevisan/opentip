@@ -157,8 +157,9 @@ class Adapter
   dimensions: (element) ->
     element = @unwrap @wrap element
     dimensions =
-      width: element.offsetWidth
-      height: element.offsetHeight
+      width: if isSvgChild(element) then element.getBoundingClientRect().width else element.offsetWidth
+      height: if isSvgChild(element) then element.getBoundingClientRect().height else element.offsetHeight
+
 
     unless dimensions.width and dimensions.height
       # The element is probably invisible. So make it visible
@@ -220,6 +221,12 @@ class Adapter
       top: element.offsetTop
       left: element.offsetLeft
     }
+
+    if (element? and isSvgChild(element))
+      offset.top = element.getBoundingClientRect().top +
+          (document.documentElement.scrollTop || document.body.scrollTop)
+      offset.left = element.getBoundingClientRect().left +
+          (document.documentElement.scrollLeft || document.body.scrollLeft)
 
     while element = element.offsetParent
       offset.top += element.offsetTop
@@ -293,10 +300,14 @@ class Adapter
         target[key] = val
     target
 
-
-
-
-
+# checks if an element has an svg ancestor
+isSvgChild = (element) ->
+  parent = element.parentNode;
+  while parent.nodeName != "BODY"
+    if parent.nodeName == "svg"
+      return true
+    parent = parent.parentNode
+  false
 
 # Add the adapter to the list
 Opentip.addAdapter new Adapter
